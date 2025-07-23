@@ -1,0 +1,231 @@
+```json
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Citizen Services Portal API",
+    "version": "v1",
+    "description": "A comprehensive API for government citizen services."
+  },
+  "servers": [
+    {
+      "url": "https://api.example.com/v1",
+      "description": "Production server"
+    }
+  ],
+  "components": {
+    "schemas": {
+      "Citizen": {
+        "type": "object",
+        "properties": {
+          "citizenId": {"type": "integer", "format": "int64"},
+          "name": {"type": "string"},
+          "email": {"type": "string", "format": "email"}
+        },
+        "required": ["citizenId", "name", "email"]
+      },
+      "PermitApplication": {
+        "type": "object",
+        "properties": {
+          "applicationId": {"type": "integer", "format": "int64"},
+          "citizenId": {"type": "integer", "format": "int64"},
+          "permitType": {"type": "string"},
+          "status": {"type": "string"}
+        },
+        "required": ["citizenId", "permitType"]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "code": {"type": "integer", "format": "int32"},
+          "message": {"type": "string"}
+        },
+        "required": ["code", "message"]
+      },
+      "Pagination": {
+        "type": "object",
+        "properties": {
+          "page": {"type": "integer", "format": "int32"},
+          "pageSize": {"type": "integer", "format": "int32"},
+          "totalCount": {"type": "integer", "format": "int64"}
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health check",
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/citizens": {
+      "get": {
+        "summary": "Get citizens (paginated)",
+        "parameters": [
+          {"name": "page", "in": "query", "schema": {"type": "integer"}, "description": "Page number"},
+          {"name": "pageSize", "in": "query", "schema": {"type": "integer"}, "description": "Page size"}
+        ],
+        "responses": {
+          "200": {
+            "description": "List of citizens",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {"type": "array", "items": {"$ref": "#/components/schemas/Citizen"}},
+                    "pagination": {"$ref": "#/components/schemas/Pagination"}
+                  }
+                }
+              }
+            }
+          },
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "500": {"$ref": "#/components/responses/InternalServerError"}
+        }
+      },
+      "post": {
+        "summary": "Create citizen",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/Citizen"}
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Citizen created",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Citizen"}
+              }
+            }
+          },
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "500": {"$ref": "#/components/responses/InternalServerError"}
+        },
+        "security": [{"bearerAuth": []}]
+      }
+    },
+    "/citizens/{citizenId}": {
+      "get": {
+        "summary": "Get citizen by ID",
+        "parameters": [{"name": "citizenId", "in": "path", "schema": {"type": "integer"}, "required": true}],
+        "responses": {
+          "200": {
+            "description": "Citizen found",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Citizen"}
+              }
+            }
+          },
+          "404": {"$ref": "#/components/responses/NotFound"}
+        }
+      },
+      "put": {
+        "summary": "Update citizen",
+        "parameters": [{"name": "citizenId", "in": "path", "schema": {"type": "integer"}, "required": true}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/Citizen"}
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Citizen updated",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Citizen"}
+              }
+            }
+          },
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "404": {"$ref": "#/components/responses/NotFound"},
+          "500": {"$ref": "#/components/responses/InternalServerError"}
+        },
+        "security": [{"bearerAuth": []}]
+      },
+      "delete": {
+        "summary": "Delete citizen",
+        "parameters": [{"name": "citizenId", "in": "path", "schema": {"type": "integer"}, "required": true}],
+        "responses": {
+          "204": {"description": "Citizen deleted"},
+          "404": {"$ref": "#/components/responses/NotFound"},
+          "500": {"$ref": "#/components/responses/InternalServerError"}
+        },
+        "security": [{"bearerAuth": []}]
+      }
+    },
+    "/permit-applications": {
+      "post": {
+        "summary": "Create permit application",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/PermitApplication"}
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Permit application created",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/PermitApplication"}
+              }
+            }
+          },
+          "400": {"$ref": "#/components/responses/BadRequest"},
+          "500": {"$ref": "#/components/responses/InternalServerError"}
+        },
+        "security": [{"bearerAuth": []}]
+      }
+    }
+
+  },
+  "responses": {
+    "BadRequest": {
+      "description": "Bad Request",
+      "content": {
+        "application/json": {
+          "schema": {"$ref": "#/components/schemas/ErrorResponse"}
+        }
+      }
+    },
+    "NotFound": {
+      "description": "Not Found",
+      "content": {
+        "application/json": {
+          "schema": {"$ref": "#/components/schemas/ErrorResponse"}
+        }
+      }
+    },
+    "InternalServerError": {
+      "description": "Internal Server Error",
+      "content": {
+        "application/json": {
+          "schema": {"$ref": "#/components/schemas/ErrorResponse"}
+        }
+      }
+    }
+  }
+}
+```
